@@ -20,8 +20,8 @@ object Main extends IdiomaticMockito {
 
       /* The mocked `FooService.doit()` method is invoked by the `FooActor.handleDoit()` method only.
         I now define two test setups that both trigger the `FooActor.handleDoit()` method:
-        (1) runSimple: call `FooActor.handleDoit()` directly
-        (2) runActor: setup an actor system and send the `Doit` message, which calls `FooActor.handleDoit()`
+        (1) simpleSetup: call `FooActor.handleDoit()` directly
+        (2) actorSetup: setup an actor system and send the `Doit` message, which calls `FooActor.handleDoit()`
 
         In both cases `FooActor.handleDoit()` will publish it's result via the `FooActor.outcome` promise.
         Finally - within the `withObjectMocked` context - I wait for the result of the promise and print it.
@@ -31,14 +31,14 @@ object Main extends IdiomaticMockito {
        */
 
       // test setup 1: call `FooActor.handleDoit()` directly
-      def runSimple(): Try[String] = {
+      def simpleSetup(): Try[String] = {
         FooActor.handleDoit()
         val result: Try[String] = Await.result(FooActor.outcome.future, 1.seconds)
         result
       }
 
       // test setup 2: setup an actor system and send the `Doit` message, which calls `FooActor.handleDoit()`
-      def runActor(): Try[String] = {
+      def actorSetup(): Try[String] = {
         val system: ActorSystem[FooActor.Doit.type] = ActorSystem(FooActor(), "FooSystem")
         // trigger actor  to call `handleDoit`
         system ! FooActor.Doit
@@ -48,16 +48,16 @@ object Main extends IdiomaticMockito {
         result
       }
 
-      // val result: Try[String] = runSimple()
-      val result: Try[String] = runActor()
+      val result: Try[String] = simpleSetup()
+      // val result: Try[String] = actorSetup()
 
       result match {
         case Success(res) => println(f"finished with result: $res")
         case Failure(ex) => println(f"failed with exception: ${ex.getMessage}")
       }
 
-      // runSimple prints: finished with result: mock result
-      // runActor prints: failed with exception: executed real impl!!!
+      // simpleSetup prints: finished with result: mock result
+      // actorSetup prints: failed with exception: executed real impl!!!
     }
   }
 }
